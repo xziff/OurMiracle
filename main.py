@@ -30,7 +30,7 @@ t_del = 500000
 t = np.linspace(0, t_max, t_del)
 
 root = Tk() 
-root.title("Сборка моделей")
+root.title("Сборка моделе")
 root.state('zoomed')
 WIDTH = root.winfo_screenwidth()
 HEIGHT = root.winfo_screenheight()
