@@ -40,6 +40,12 @@ def get_wr(wc, delta, S, Pn, cosfi, Un, Ifn, Xc, Rc):
     mu0 = 4 * math.pi * (10 ** (-7))
     return ((math.sqrt((Pn/math.sqrt(3)/cosfi/Un*1000*math.sqrt(2)*Xc)**2 + (Un*1000/math.sqrt(3)*math.sqrt(2))**2 + 2*Pn/math.sqrt(3)/cosfi/Un*1000*math.sqrt(2)*Xc*Un*1000/math.sqrt(3)*math.sqrt(2)*math.sin(math.fabs(math.acos(cosfi)))))*(math.pi*delta*math.pi)/(100*math.pi*wc*Ifn*mu0*4*S))
 
+def get_R_Z_T_11(Pkz, UnZ, Sn):
+    return (Pkz/1000*(UnZ*UnZ)/(Sn*Sn))
+def get_Z_Z_T_11(Uk, UnZ, Sn):
+    return (Uk/100*(UnZ**2)/Sn)
+
+
 ###
 class Electrical_Bus:
     state_click = 0
@@ -169,6 +175,8 @@ class Transformator_Z_T_11:
     delta_x = 0
     delta_y = 0
     k_click = 0.1
+    UnZ = 121
+    UnT = 6.3
     L = 1
     ra = 0.4
     R_t = 0.1
@@ -178,13 +186,13 @@ class Transformator_Z_T_11:
     R2 = 0.355
     Ls1 = 0.000087
     Ls2 = 0.032
-    w1 = 100
-    w2 = 1921
+    w1 = 100*int(121/(math.sqrt(3)*6.3))
+    w2 = 100
     Roff_T = 0
     Roff_Z = 0
 
-    var_text = ["Число витков обмотки треугольника, шт:",
-    "Число витков обмотки звезды, шт:",
+    var_text = ["Номинальное напряжение обмотки треугольника, кВ:",
+    "Номинальное напряжение обмотки звезды, кВ:",
     "Активное сопротивление обмотки треугольника, Ом:",
     "Активное сопротивление обмотки звезды, Ом:",
     "Индуктивность поля рассеяния обмотки треугольника, Гн:",
@@ -197,14 +205,20 @@ class Transformator_Z_T_11:
     "Моменты времени, при которых контакты выключателя на стороне D размыкаются, с:" 
     ]
     
+    example_Transformator_Z_T_11 = [[121, 6.3, 310, 85, 11, 0.6],
+    [],
+    ]
+
     mass_entry = []
     mass_var = []
 
     def __init__(self, init_x, init_y, canv, root):
+        print(self.example_Transformator_Z_T_11)
         self.canv = canv
         self.root = root
         self.list_example = ttk.Combobox(self.root, values = [
         "Пользовательский",
+        "ТДН-80000/110",
         ])
         self.list_example.current(0)
         self.image_model_data = create_image_for_model("Image/Transformator/" + str(self.position) + ".png")
