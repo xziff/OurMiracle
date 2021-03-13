@@ -7,6 +7,7 @@ from scipy. integrate import odeint
 import numpy as np
 
 k_size = 6
+state_menu = 0
 def create_image_for_model(pass_obj):
     buff_image = ImageTk.PhotoImage(Image.open(pass_obj))
     width_image = buff_image.width()/k_size
@@ -19,8 +20,8 @@ n_fig = 1
 def ksi_dif(H):
     return 70
 
-def B_delta(Ica, Icb, Icc, Ira, Irb, Irc, x, phi, mu0, delta, wc, wr, tau):
-    return (2*mu0/(math.pi*delta)*(wc*Ica*math.cos(math.pi/tau*x)+wc*Icb*math.cos(math.pi/tau*x-2*math.pi/3)+wc*Icc*math.cos(math.pi/tau*x+2*math.pi/3)+wr*Ira*math.cos(math.pi/tau*x-phi)+wr*Irb*math.cos(math.pi/tau*x-phi-2*math.pi/3)+wr*Irc*math.cos(math.pi/tau*x-phi+2*math.pi/3)))
+def B_delta(Ica, Icb, Icc, Ira, Irb, Irc, x, phi, mu0, delta, wc, wr, tau, p):
+    return (2*mu0/(math.pi*delta)*(wc*Ica*math.cos(math.pi/tau*x)+wc*Icb*math.cos(math.pi/tau*x-2*math.pi/3)+wc*Icc*math.cos(math.pi/tau*x+2*math.pi/3)+wr*Ira*math.cos(math.pi/tau*x-phi*p)+wr*Irb*math.cos(math.pi/tau*x-phi*p-2*math.pi/3)+wr*Irc*math.cos(math.pi/tau*x-phi*p+2*math.pi/3)))
 
 def moment_pd(t, t0, t2, M_max):
     t1 = t0 + t2
@@ -54,13 +55,20 @@ class Electrical_Bus:
         self.image_model_data = create_image_for_model("Image/Electrical Bus/" + str(self.position) + ".png")
         self.image_width = self.image_model_data.width()
         self.image_height = self.image_model_data.height()
+        self.x_menu = 0
+        self.y_menu = 0
         self.x = init_x
         self.y = init_y
         self.image_model = self.canv.create_image(self.x,self.y,image = self.image_model_data, anchor = 'nw')
-        self.model_text = self.canv.create_text(self.x, self.y, text = str(self.number_of_connection), fill = "black", font = ("GOST Type A", "14"), anchor="sw")
-    
+        self.model_text = self.canv.create_text(self.x, self.y, text = str(self.number_of_connection), fill = "black", font = ("GOST Type A", "14"), anchor="sw")   
+  
+
     def __del__(self):
         self.canv.delete(self.model_text)
+    
+    def menu_click(self, m_x, m_y, width_object_menu):
+        if ((m_x > self.x_menu) and (m_x < self.x_menu + width_object_menu) and (m_y > self.y_menu) and (m_y < self.y_menu + width_object_menu)):
+            return True
 
     def control_connection(self, models):
         if (self.state_click  == 0):
@@ -158,19 +166,20 @@ class Transformator_Z_T_11:
     position_switch_Z = True
     help_var_switch_Z = False
     toff_Z = 0
-    var = [[],[],[],[],[],[]]
-
+    delta_x = 0
+    delta_y = 0
+    k_click = 0.1
     L = 1
     ra = 0.4
     R_t = 0.1
     lm = 2*(L + ra)
     S = math.pi*R_t**2
-    R1 = 0.005
-    R2 = 0.001
-    Ls1 = 0.0003
-    Ls2 = 0.0003
-    w1 = 300
-    w2 = 300
+    R1 = 0.0009612
+    R2 = 0.355
+    Ls1 = 0.000087
+    Ls2 = 0.032
+    w1 = 100
+    w2 = 1921
     Roff_T = 0
     Roff_Z = 0
 
@@ -201,10 +210,16 @@ class Transformator_Z_T_11:
         self.image_model_data = create_image_for_model("Image/Transformator/" + str(self.position) + ".png")
         self.image_width = self.image_model_data.width()
         self.image_height = self.image_model_data.height()
+        self.x_menu = 0
+        self.y_menu = 0
         self.x = init_x
         self.y = init_y
         self.image_model = self.canv.create_image(self.x,self.y,image = self.image_model_data, anchor = 'nw')
-    
+
+    def menu_click(self, m_x, m_y, width_object_menu):
+        if ((m_x > self.x_menu) and (m_x < self.x_menu + width_object_menu) and (m_y > self.y_menu) and (m_y < self.y_menu + width_object_menu)):
+            return True
+
     def get_first(self):
         return ([0, 0, 0, 0, 0, 0])
 
@@ -370,7 +385,6 @@ class Transformator_Z_T_11:
                 return ("none")
 
     def set_state_click(self, m_x, m_y):
-        self.k_click = 0.1
         if ((m_x >= self.x + self.k_click*self.image_width) and (m_x <= self.x + self.image_width - self.k_click*self.image_width) and (m_y >= self.y + self.k_click*self.image_height) and (m_y <= self.y + self.image_height - self.k_click*self.image_height)):
             if (self.state_click  == 0):
                 self.state_click = 1
@@ -477,7 +491,9 @@ class SM:
     state_change_parameter = 0
     connectivity_to_bus = 1
     position = 0
-    var = [[],[],[],[],[]]
+    delta_x = 0
+    delta_y = 0
+    k_click = 0.1
     Un = 6.38
     Ur = 350
     tau = 1.2
@@ -551,10 +567,16 @@ class SM:
         self.image_model_data = create_image_for_model("Image/SM/" + str(self.position) + ".png")
         self.image_width = self.image_model_data.width()
         self.image_height = self.image_model_data.height()
+        self.x_menu = 0
+        self.y_menu = 0
         self.x = init_x
         self.y = init_y
         self.image_model = self.canv.create_image(self.x,self.y,image = self.image_model_data, anchor = 'nw')
     
+    def menu_click(self, m_x, m_y, width_object_menu):
+        if ((m_x > self.x_menu) and (m_x < self.x_menu + width_object_menu) and (m_y > self.y_menu) and (m_y < self.y_menu + width_object_menu)):
+            return True
+
     def get_first(self):
         return ([0, 0, self.Ir_start, self.w_start, self.phi_start])
 
@@ -588,8 +610,8 @@ class SM:
             return current_matrix
 
     def get_derw(self, input_variable, t):
-        Melmag = (self.D - 2*self.delta)*self.wr*(2*self.wc*input_variable[2]*self.l*self.mu0)/(math.pi*self.delta)*(input_variable[0]*math.cos(math.pi/2 - input_variable[4]) + input_variable[1]*math.cos(math.pi/2 - input_variable[4] + 2*math.pi/3) + (-input_variable[0]-input_variable[1])*math.cos(math.pi/2 - input_variable[4] - 2*math.pi/3))
-        derw = (moment_pd(t, self.t0+9, self.t2, self.M_max) - Melmag)/self.J
+        Melmag = (self.D - 0*self.delta)*self.wr*(2*self.wc*input_variable[2]*self.l*self.mu0)/(math.pi*self.delta)*(input_variable[0]*math.cos(math.pi/2 - input_variable[4]) + input_variable[1]*math.cos(math.pi/2 - input_variable[4] + 2*math.pi/3) + (-input_variable[0]-input_variable[1])*math.cos(math.pi/2 - input_variable[4] - 2*math.pi/3))
+        derw = (moment_pd(t, self.t0, self.t2, self.M_max) - Melmag)/self.J
         return derw
     
     def get_w(self, input_variable):
@@ -778,9 +800,12 @@ class Static_load:
     state_change_parameter = 0
     connectivity_to_bus = 1
     position = 0
-    var = [[],[],[]]
+    delta_x = 0
+    delta_y = 0
+    k_click = 0.1
     #R = 733.8/100
-    R = 0
+    R = 60
+    Lc = 0
 
     def __init__(self, init_x, init_y, canv, root):
         self.canv = canv
@@ -792,18 +817,24 @@ class Static_load:
         self.image_model_data = create_image_for_model("Image/Static Load/" + str(self.position) + ".png")
         self.image_width = self.image_model_data.width()
         self.image_height = self.image_model_data.height()
+        self.x_menu = 0
+        self.y_menu = 0
         self.x = init_x
         self.y = init_y
         self.image_model = self.canv.create_image(self.x,self.y,image = self.image_model_data, anchor = 'nw')
     
+    def menu_click(self, m_x, m_y, width_object_menu):
+        if ((m_x > self.x_menu) and (m_x < self.x_menu + width_object_menu) and (m_y > self.y_menu) and (m_y < self.y_menu + width_object_menu)):
+            return True
+
     def get_first(self):
         return ([0, 0, 0])
 
     def get_main_determinant(self, input_variable):
-        main_determinant = [[0, 0, 0],
-                            [0, 0, 0],
-                            [0, 0, 0]
-                            ]   	                    
+        main_determinant = [[-self.Lc, self.Lc, 0],
+                            [0, -self.Lc, self.Lc],
+                            [0, 0, -self.Lc]
+                            ]     	                    
         return main_determinant
 
     def get_own_matrix(self, input_variable, t):
@@ -900,8 +931,10 @@ class Electrical_system:
     state_change_parameter = 0
     connectivity_to_bus = 1
     position = 0
-    var = [[],[],[]]
-    Lc = 0.0/(100*math.pi)
+    delta_x = 0
+    delta_y = 0
+    k_click = 0.1
+    Lc = 0.2/(100*math.pi)
     Uc = 6386.3621*math.sqrt(3)*10
     fc = 50
     phic = -1*math.pi/6
@@ -925,10 +958,16 @@ class Electrical_system:
         self.image_model_data = create_image_for_model("Image/Electrical System/" + str(self.position) + ".png")
         self.image_width = self.image_model_data.width()
         self.image_height = self.image_model_data.height()
+        self.x_menu = 0
+        self.y_menu = 0
         self.x = init_x
         self.y = init_y
         self.image_model = self.canv.create_image(self.x,self.y,image = self.image_model_data, anchor = 'nw')
     
+    def menu_click(self, m_x, m_y, width_object_menu):
+        if ((m_x > self.x_menu) and (m_x < self.x_menu + width_object_menu) and (m_y > self.y_menu) and (m_y < self.y_menu + width_object_menu)):
+            return True
+
     def get_first(self):
         return ([0, 0, 0])
 
@@ -1055,9 +1094,11 @@ class AM:
     position_switch_Q = True
     help_var_switch_Q = False
     toff= 0
-    var = [[],[],[],[],[]]
+    delta_x = 0
+    delta_y = 0
+    k_click = 0.1
 
-
+    p = 2
     tau = 1.775
     l = 3.5
     wc = 14
@@ -1073,6 +1114,7 @@ class AM:
     D = 2*tau/math.pi
 
     var_text = [
+    "Число пар полюсов, шт:",
     "Момент инерции ротора, кг*м2:",
     "Активное сопротивление обмотки статора, Ом:",
     "Активное сопротивление обмотки ротора, Ом:",
@@ -1100,32 +1142,38 @@ class AM:
         self.image_model_data = create_image_for_model("Image/AM/" + str(self.position) + ".png")
         self.image_width = self.image_model_data.width()
         self.image_height = self.image_model_data.height()
+        self.x_menu = 0
+        self.y_menu = 0
         self.x = init_x
         self.y = init_y
         self.image_model = self.canv.create_image(self.x,self.y,image = self.image_model_data, anchor = 'nw')
     
+    def menu_click(self, m_x, m_y, width_object_menu):
+        if ((m_x > self.x_menu) and (m_x < self.x_menu + width_object_menu) and (m_y > self.y_menu) and (m_y < self.y_menu + width_object_menu)):
+            return True
+
     def get_first(self):
         return ([0, 0, 0, 0, 0, 0, 0, 0])
 
     def get_main_determinant(self, input_variable):
-        main_determinant = [[-(4*self.wc*self.wc*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*(math.sin(math.pi/2) - (-1)*math.sin(math.pi/6)) - self.Lcs, -(4*self.wc*self.wc*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*(math.sin(math.pi/2 + 2*math.pi/3) - (-1)*math.sin(math.pi/6 - 2*math.pi/3)) + self.Lcs, -(4*self.wc*self.wc*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*(math.sin(math.pi/2 - 2*math.pi/3) - (-1)*math.sin(math.pi/6 + 2*math.pi/3)), -(4*self.wr*self.wc*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*(math.sin(math.pi/2 + input_variable[7]) - (-1)*math.sin(math.pi/6 - input_variable[7])), -(4*self.wr*self.wc*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*(math.sin(math.pi/2 + input_variable[7] + 2*math.pi/3) - (-1)*math.sin(math.pi/6 - input_variable[7] - 2*math.pi/3)), -(4*self.wr*self.wc*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*(math.sin(math.pi/2 + input_variable[7] - 2*math.pi/3) - (-1)*math.sin(math.pi/6 - input_variable[7] + 2*math.pi/3))],
-                    [-(4*self.wc*self.wc*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*((-1)*math.sin(math.pi/6) - math.sin(-math.pi/6)), -(4*self.wc*self.wc*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*((-1)*math.sin(math.pi/6 - 2*math.pi/3) - math.sin(-math.pi/6 - 2*math.pi/3)) - self.Lcs, -(4*self.wc*self.wc*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*((-1)*math.sin(math.pi/6 + 2*math.pi/3) - math.sin(-math.pi/6 + 2*math.pi/3)) + self.Lcs, -(4*self.wr*self.wc*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*((-1)*math.sin(math.pi/6 - input_variable[7]) - math.sin(-math.pi/6 - input_variable[7])), -(4*self.wr*self.wc*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*((-1)*math.sin(math.pi/6 - input_variable[7] - 2*math.pi/3) - math.sin(-math.pi/6 - input_variable[7] - 2*math.pi/3)), -(4*self.wr*self.wc*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*((-1)*math.sin(math.pi/6 - input_variable[7] + 2*math.pi/3) - math.sin(-math.pi/6 - input_variable[7] + 2*math.pi/3))],
-                    [-(4*self.wc*self.wc*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*math.sin(-math.pi/6), -(4*self.wc*self.wc*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*math.sin(-math.pi/6 - 2*math.pi/3), -(4*self.wc*self.wc*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*math.sin(-math.pi/6 + 2*math.pi/3) - self.Lcs, -(4*self.wr*self.wc*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*math.sin(-math.pi/6 - input_variable[7]), -(4*self.wr*self.wc*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*math.sin(-math.pi/6 - input_variable[7] - 2*math.pi/3), -(4*self.wr*self.wc*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*math.sin(-math.pi/6 - input_variable[7] + 2*math.pi/3)],
-                    [-(4*self.wr*self.wc*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*math.sin(math.pi/2-input_variable[7]-0), -(4*self.wr*self.wc*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*math.sin(math.pi/2-input_variable[7]+2*math.pi/3), -(4*self.wr*self.wc*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*math.sin(math.pi/2-input_variable[7]-2*math.pi/3), -(4*self.wr*self.wr*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*math.sin(math.pi/2-0) - self.Lrs, -(4*self.wr*self.wr*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*math.sin(math.pi/2+2*math.pi/3), -(4*self.wr*self.wr*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*math.sin(math.pi/2-2*math.pi/3)],
-                    [-(4*self.wr*self.wc*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*(-1)*math.sin(math.pi/6+input_variable[7]-0), -(4*self.wr*self.wc*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*(-1)*math.sin(math.pi/6+input_variable[7]-2*math.pi/3), -(4*self.wr*self.wc*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*(-1)*math.sin(math.pi/6+input_variable[7]+2*math.pi/3), -(4*self.wr*self.wr*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*(-1)*math.sin(math.pi/6+0), -(4*self.wr*self.wr*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*(-1)*math.sin(math.pi/6-2*math.pi/3) - self.Lrs, -(4*self.wr*self.wr*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*(-1)*math.sin(math.pi/6+2*math.pi/3)],
-                    [-(4*self.wr*self.wc*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*math.sin(-math.pi/6+input_variable[7]-0), -(4*self.wr*self.wc*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*math.sin(-math.pi/6+input_variable[7]-2*math.pi/3), -(4*self.wr*self.wc*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*math.sin(-math.pi/6+input_variable[7]+2*math.pi/3), -(4*self.wr*self.wr*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*math.sin(-math.pi/6+0), -(4*self.wr*self.wr*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*math.sin(-math.pi/6-2*math.pi/3), -(4*self.wr*self.wr*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*math.sin(-math.pi/6+2*math.pi/3) - self.Lrs]
+        main_determinant = [[-(4*self.wc*self.wc*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*(math.sin(math.pi/2) - (-1)*math.sin(math.pi/6)) - self.Lcs, -(4*self.wc*self.wc*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*(math.sin(math.pi/2 + 2*math.pi/3) - (-1)*math.sin(math.pi/6 - 2*math.pi/3)) + self.Lcs, -(4*self.wc*self.wc*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*(math.sin(math.pi/2 - 2*math.pi/3) - (-1)*math.sin(math.pi/6 + 2*math.pi/3)), -(4*self.wr*self.wc*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*(math.sin(math.pi/2 + input_variable[7]*self.p) - (-1)*math.sin(math.pi/6 - input_variable[7]*self.p)), -(4*self.wr*self.wc*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*(math.sin(math.pi/2 + input_variable[7]*self.p + 2*math.pi/3) - (-1)*math.sin(math.pi/6 - input_variable[7]*self.p - 2*math.pi/3)), -(4*self.wr*self.wc*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*(math.sin(math.pi/2 + input_variable[7]*self.p - 2*math.pi/3) - (-1)*math.sin(math.pi/6 - input_variable[7]*self.p + 2*math.pi/3))],
+                    [-(4*self.wc*self.wc*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*((-1)*math.sin(math.pi/6) - math.sin(-math.pi/6)), -(4*self.wc*self.wc*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*((-1)*math.sin(math.pi/6 - 2*math.pi/3) - math.sin(-math.pi/6 - 2*math.pi/3)) - self.Lcs, -(4*self.wc*self.wc*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*((-1)*math.sin(math.pi/6 + 2*math.pi/3) - math.sin(-math.pi/6 + 2*math.pi/3)) + self.Lcs, -(4*self.wr*self.wc*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*((-1)*math.sin(math.pi/6 - input_variable[7]*self.p) - math.sin(-math.pi/6 - input_variable[7]*self.p)), -(4*self.wr*self.wc*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*((-1)*math.sin(math.pi/6 - input_variable[7]*self.p - 2*math.pi/3) - math.sin(-math.pi/6 - input_variable[7]*self.p - 2*math.pi/3)), -(4*self.wr*self.wc*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*((-1)*math.sin(math.pi/6 - input_variable[7]*self.p + 2*math.pi/3) - math.sin(-math.pi/6 - input_variable[7]*self.p + 2*math.pi/3))],
+                    [-(4*self.wc*self.wc*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*math.sin(-math.pi/6), -(4*self.wc*self.wc*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*math.sin(-math.pi/6 - 2*math.pi/3), -(4*self.wc*self.wc*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*math.sin(-math.pi/6 + 2*math.pi/3) - self.Lcs, -(4*self.wr*self.wc*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*math.sin(-math.pi/6 - input_variable[7]*self.p), -(4*self.wr*self.wc*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*math.sin(-math.pi/6 - input_variable[7]*self.p - 2*math.pi/3), -(4*self.wr*self.wc*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*math.sin(-math.pi/6 - input_variable[7]*self.p + 2*math.pi/3)],
+                    [-(4*self.wr*self.wc*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*math.sin(math.pi/2-input_variable[7]*self.p-0), -(4*self.wr*self.wc*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*math.sin(math.pi/2-input_variable[7]*self.p+2*math.pi/3), -(4*self.wr*self.wc*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*math.sin(math.pi/2-input_variable[7]*self.p-2*math.pi/3), -(4*self.wr*self.wr*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*math.sin(math.pi/2-0) - self.Lrs, -(4*self.wr*self.wr*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*math.sin(math.pi/2+2*math.pi/3), -(4*self.wr*self.wr*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*math.sin(math.pi/2-2*math.pi/3)],
+                    [-(4*self.wr*self.wc*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*(-1)*math.sin(math.pi/6+input_variable[7]*self.p-0), -(4*self.wr*self.wc*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*(-1)*math.sin(math.pi/6+input_variable[7]*self.p-2*math.pi/3), -(4*self.wr*self.wc*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*(-1)*math.sin(math.pi/6+input_variable[7]*self.p+2*math.pi/3), -(4*self.wr*self.wr*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*(-1)*math.sin(math.pi/6+0), -(4*self.wr*self.wr*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*(-1)*math.sin(math.pi/6-2*math.pi/3) - self.Lrs, -(4*self.wr*self.wr*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*(-1)*math.sin(math.pi/6+2*math.pi/3)],
+                    [-(4*self.wr*self.wc*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*math.sin(-math.pi/6+input_variable[7]*self.p-0), -(4*self.wr*self.wc*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*math.sin(-math.pi/6+input_variable[7]*self.p-2*math.pi/3), -(4*self.wr*self.wc*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*math.sin(-math.pi/6+input_variable[7]*self.p+2*math.pi/3), -(4*self.wr*self.wr*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*math.sin(-math.pi/6+0), -(4*self.wr*self.wr*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*math.sin(-math.pi/6-2*math.pi/3), -(4*self.wr*self.wr*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*math.sin(-math.pi/6+2*math.pi/3) - self.Lrs]
                    ]                   
         return main_determinant
 
     def get_own_matrix(self, input_variable, t):
         if (self.position_switch_Q == False):
             self.Roff = 50000/0.01*(t - self.toff)
-        own_matrix = [input_variable[0]*(self.Rc + self.Roff) - input_variable[1]*(self.Rc + self.Roff) + (4*self.wr*self.wc*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*input_variable[6]*(input_variable[3]*math.cos(math.pi/2 + input_variable[7]) + input_variable[4]*math.cos(math.pi/2 + input_variable[7] + 2*math.pi/3) + input_variable[5]*math.cos(math.pi/2 + input_variable[7] - 2*math.pi/3) + (-1)*input_variable[3]*math.cos(math.pi/6 - input_variable[7]) + (-1)*input_variable[4]*math.cos(math.pi/6 - input_variable[7] - 2*math.pi/3) + (-1)*input_variable[5]*math.cos(math.pi/6 - input_variable[7] + 2*math.pi/3)),
-                    input_variable[1]*(self.Rc + self.Roff) - input_variable[2]*(self.Rc + self.Roff) + (4*self.wr*self.wc*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*input_variable[6]*(input_variable[3]*math.cos(math.pi/6 - input_variable[7]) + input_variable[4]*math.cos(math.pi/6 - input_variable[7] - 2*math.pi/3) + input_variable[5]*math.cos(math.pi/6 - input_variable[7] + 2*math.pi/3) + input_variable[3]*math.cos(-math.pi/6 - input_variable[7]) + input_variable[4]*math.cos(-math.pi/6 - input_variable[7] - 2*math.pi/3) + input_variable[5]*math.cos(-math.pi/6 - input_variable[7] + 2*math.pi/3)),
-                    input_variable[2]*(self.Rc + self.Roff) - (4*self.wr*self.wc*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*input_variable[6]*(input_variable[3]*math.cos(-math.pi/6 - input_variable[7]) + input_variable[4]*math.cos(-math.pi/6 - input_variable[7] - 2*math.pi/3) + input_variable[5]*math.cos(-math.pi/6 - input_variable[7] + 2*math.pi/3)),
-                    input_variable[3]*self.Rr-input_variable[6]*(4*self.wr*self.wc*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*(input_variable[0]*math.cos(math.pi/2-input_variable[7])+input_variable[1]*math.cos(math.pi/2-input_variable[7]+2*math.pi/3)+input_variable[2]*math.cos(math.pi/2-input_variable[7]-2*math.pi/3)),
-                    input_variable[4]*self.Rr+input_variable[6]*(4*self.wr*self.wc*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*(-1)*(input_variable[0]*math.cos(math.pi/6+input_variable[7])+input_variable[1]*math.cos(math.pi/6+input_variable[7]-2*math.pi/3)+input_variable[2]*math.cos(math.pi/6+input_variable[7]+2*math.pi/3)),
-                    input_variable[5]*self.Rr+input_variable[6]*(4*self.wr*self.wc*self.tau*self.l*self.mu0)/(math.pi*self.delta*math.pi)*(input_variable[0]*math.cos(-math.pi/6+input_variable[7])+input_variable[1]*math.cos(-math.pi/6+input_variable[7]-2*math.pi/3)+input_variable[2]*math.cos(-math.pi/6+input_variable[7]+2*math.pi/3))
+        own_matrix = [input_variable[0]*(self.Rc + self.Roff) - input_variable[1]*(self.Rc + self.Roff) + (4*self.wr*self.wc*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*input_variable[6]*self.p*(input_variable[3]*math.cos(math.pi/2 + input_variable[7]*self.p) + input_variable[4]*math.cos(math.pi/2 + input_variable[7]*self.p + 2*math.pi/3) + input_variable[5]*math.cos(math.pi/2 + input_variable[7]*self.p - 2*math.pi/3) + (-1)*input_variable[3]*math.cos(math.pi/6 - input_variable[7]*self.p) + (-1)*input_variable[4]*math.cos(math.pi/6 - input_variable[7]*self.p - 2*math.pi/3) + (-1)*input_variable[5]*math.cos(math.pi/6 - input_variable[7]*self.p + 2*math.pi/3)),
+                    input_variable[1]*(self.Rc + self.Roff) - input_variable[2]*(self.Rc + self.Roff) + (4*self.wr*self.wc*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*input_variable[6]*self.p*(input_variable[3]*math.cos(math.pi/6 - input_variable[7]*self.p) + input_variable[4]*math.cos(math.pi/6 - input_variable[7]*self.p - 2*math.pi/3) + input_variable[5]*math.cos(math.pi/6 - input_variable[7]*self.p + 2*math.pi/3) + input_variable[3]*math.cos(-math.pi/6 - input_variable[7]*self.p) + input_variable[4]*math.cos(-math.pi/6 - input_variable[7]*self.p - 2*math.pi/3) + input_variable[5]*math.cos(-math.pi/6 - input_variable[7]*self.p + 2*math.pi/3)),
+                    input_variable[2]*(self.Rc + self.Roff) - (4*self.wr*self.wc*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*input_variable[6]*self.p*(input_variable[3]*math.cos(-math.pi/6 - input_variable[7]*self.p) + input_variable[4]*math.cos(-math.pi/6 - input_variable[7]*self.p - 2*math.pi/3) + input_variable[5]*math.cos(-math.pi/6 - input_variable[7]*self.p + 2*math.pi/3)),
+                    input_variable[3]*self.Rr-input_variable[6]*self.p*(4*self.wr*self.wc*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*(input_variable[0]*math.cos(math.pi/2-input_variable[7]*self.p)+input_variable[1]*math.cos(math.pi/2-input_variable[7]*self.p+2*math.pi/3)+input_variable[2]*math.cos(math.pi/2-input_variable[7]*self.p-2*math.pi/3)),
+                    input_variable[4]*self.Rr+input_variable[6]*self.p*(4*self.wr*self.wc*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*(-1)*(input_variable[0]*math.cos(math.pi/6+input_variable[7]*self.p)+input_variable[1]*math.cos(math.pi/6+input_variable[7]*self.p-2*math.pi/3)+input_variable[2]*math.cos(math.pi/6+input_variable[7]*self.p+2*math.pi/3)),
+                    input_variable[5]*self.Rr+input_variable[6]*self.p*(4*self.wr*self.wc*self.tau*self.l*self.mu0*self.p)/(math.pi*self.delta*math.pi)*(input_variable[0]*math.cos(-math.pi/6+input_variable[7]*self.p)+input_variable[1]*math.cos(-math.pi/6+input_variable[7]*self.p-2*math.pi/3)+input_variable[2]*math.cos(-math.pi/6+input_variable[7]*self.p+2*math.pi/3))
                     ]
         return own_matrix
 
@@ -1149,8 +1197,8 @@ class AM:
             return current_matrix
 
     def get_derw(self, input_variable, t):
-        Melmag = self.D*self.l*self.wr*(input_variable[3]*B_delta(input_variable[0], input_variable[1], input_variable[2], input_variable[3], input_variable[4], input_variable[5], self.tau/math.pi*input_variable[7]-self.tau/2, input_variable[7], self.mu0, self.delta, self.wc, self.wr, self.tau)+input_variable[4]*B_delta(input_variable[0], input_variable[1], input_variable[2], input_variable[3], input_variable[4], input_variable[5], self.tau/math.pi*input_variable[7]+self.tau/6, input_variable[7], self.mu0, self.delta, self.wc, self.wr, self.tau)+input_variable[5]*B_delta(input_variable[0], input_variable[1], input_variable[2], input_variable[3], input_variable[4], input_variable[5], self.tau/math.pi*input_variable[7]-7*self.tau/6, input_variable[7], self.mu0, self.delta, self.wc, self.wr, self.tau))
-        derw = (-100*math.tanh(input_variable[6]) - Melmag)/self.J
+        Melmag = self.p*self.D*self.l*self.wr*(input_variable[3]*B_delta(input_variable[0], input_variable[1], input_variable[2], input_variable[3], input_variable[4], input_variable[5], self.tau/math.pi*input_variable[7]*self.p-self.tau/2, input_variable[7], self.mu0, self.delta, self.wc, self.wr, self.tau, self.p)+input_variable[4]*B_delta(input_variable[0], input_variable[1], input_variable[2], input_variable[3], input_variable[4], input_variable[5], self.tau/math.pi*input_variable[7]*self.p+self.tau/6, input_variable[7], self.mu0, self.delta, self.wc, self.wr, self.tau, self.p)+input_variable[5]*B_delta(input_variable[0], input_variable[1], input_variable[2], input_variable[3], input_variable[4], input_variable[5], self.tau/math.pi*input_variable[7]*self.p-7*self.tau/6, input_variable[7], self.mu0, self.delta, self.wc, self.wr, self.tau, self.p))
+        derw = (-0*math.tanh(input_variable[6]) - Melmag)/self.J
         return derw
     
     def get_w(self, input_variable):
@@ -1181,7 +1229,10 @@ class AM:
                 if (i == 0):
                     list_time_interrupt.append(j)
                 if (i == 1):
-                    list_time_interrupt.append(j + 0.01)
+                    if (j == 0):
+                        list_time_interrupt.append(j)
+                    else:
+                        list_time_interrupt.append(j + 0.01)
         return list_time_interrupt
 
 
@@ -1257,7 +1308,7 @@ class AM:
             switch_time_Q_off_string = ""
             for i in self.switch_time_Q[1]:
                 switch_time_Q_off_string = switch_time_Q_off_string + str(i) + ", "
-            current_var = [self.J, self.Rc,self.Rr,self.Lcs,self.Lrs,self.l,self.tau, self.delta, self.wc, self.wr, switch_time_Q_on_string, switch_time_Q_off_string]
+            current_var = [self.p, self.J, self.Rc,self.Rr,self.Lcs,self.Lrs,self.l,self.tau, self.delta, self.wc, self.wr, switch_time_Q_on_string, switch_time_Q_off_string]
             for i in range(len(self.var_text)):
                 self.mass_var.append(StringVar(value=str(current_var[i])))
                 self.mass_entry.append(Entry(textvariable = self.mass_var[i], width = 12, relief = SOLID, borderwidth = 1, justify = CENTER))
@@ -1269,35 +1320,337 @@ class AM:
     def set_parameter_in_model(self):
         for i in range(len(self.mass_var)):
             if (i == 0):
-                self.J = float(self.mass_var[i].get())
+                self.p = float(self.mass_var[i].get())
             elif (i == 1):
-                self.Rc = float(self.mass_var[i].get())
+                self.J = float(self.mass_var[i].get())
             elif (i == 2):
-                self.Rr = float(self.mass_var[i].get())
+                self.Rc = float(self.mass_var[i].get())
             elif (i == 3):
-                self.Lcs = float(self.mass_var[i].get())
+                self.Rr = float(self.mass_var[i].get())
             elif (i == 4):
-                self.Lrs = float(self.mass_var[i].get())
+                self.Lcs = float(self.mass_var[i].get())
             elif (i == 5):
-                self.l = float(self.mass_var[i].get())
+                self.Lrs = float(self.mass_var[i].get())
             elif (i == 6):
-                self.tau = float(self.mass_var[i].get())
+                self.l = float(self.mass_var[i].get())
             elif (i == 7):
-                self.delta = float(self.mass_var[i].get())
+                self.tau = float(self.mass_var[i].get())
             elif (i == 8):
-                self.wc = float(self.mass_var[i].get())
+                self.delta = float(self.mass_var[i].get())
             elif (i == 9):
-                self.wr = float(self.mass_var[i].get())
+                self.wc = float(self.mass_var[i].get())
             elif (i == 10):
+                self.wr = float(self.mass_var[i].get())
+            elif (i == 11):
                 self.switch_time_Q[0] = []
                 for j in self.mass_var[i].get().split(", "):
                     if (j != ""):
                         self.switch_time_Q[0].append(float(j))  
-            elif (i == 11):
+            elif (i == 12):
                 self.switch_time_Q[1] = []
                 for j in self.mass_var[i].get().split(", "):
                     if (j != ""):
                         self.switch_time_Q[1].append(float(j)) 
+
+    def move_model(self, m_x, m_y):
+        if (self.state_click  == 1):
+            self.canv.coords(self.image_model, m_x - self.delta_x, m_y - self.delta_y)
+            self.x = m_x - self.delta_x
+            self.y = m_y - self.delta_y
+
+class KZ_Bus:
+    state_click = 0
+    state_change_parameter = 0
+    connectivity_to_bus = 1
+    switch_time_Q = [[7],[0]]
+    delta_x = 0
+    delta_y = 0
+    k_click = 0.1
+    position_switch_Q = True
+    help_var_switch_Q = False
+    help_var_switch_Qon = False
+    toff= 0
+    ton = 0
+    R = 0.0001
+    Roff = 0
+    Lc = 0.0002
+    def __init__(self, init_x, init_y, canv, root):
+        self.canv = canv
+        self.root = root
+        self.image_model_data = create_image_for_model("Image/KZ_Bus.png")
+        self.image_width = self.image_model_data.width()
+        self.image_height = self.image_model_data.height()
+        self.x_menu = 0
+        self.y_menu = 0
+        self.x = init_x
+        self.y = init_y
+        self.image_model = self.canv.create_image(self.x,self.y,image = self.image_model_data, anchor = 'nw')
+    
+    def menu_click(self, m_x, m_y, width_object_menu):
+        if ((m_x > self.x_menu) and (m_x < self.x_menu + width_object_menu) and (m_y > self.y_menu) and (m_y < self.y_menu + width_object_menu)):
+            return True
+
+    def get_first(self):
+        return ([0, 0, 0])
+
+    def get_main_determinant(self, input_variable):
+        main_determinant = [[-self.Lc, self.Lc, 0],
+                            [0, -self.Lc, self.Lc],
+                            [0, 0, -self.Lc]
+                            ]                             
+        return main_determinant
+
+    def get_own_matrix(self, input_variable, t):
+        if ((self.position_switch_Q == False) and ((t - self.toff) < 0.01)):
+            self.Lc= 50000/0.01*(t - self.toff)
+        if ((self.position_switch_Q == False) and ((t - self.toff) > 0.01)):
+            self.Lc = 0  
+        if ((self.position_switch_Q == True) and ((t - self.ton) < 0.01)):
+            self.Lc= -0.0005/0.01*(t - self.ton) + 0.0005
+        if ((self.position_switch_Q == True) and ((t - self.ton) > 0.01)):
+            self.Lc = 0
+        self.Roff = 0
+        own_matrix = [input_variable[0]*(self.R+self.Roff) - input_variable[1]*(self.R+self.Roff),
+                    input_variable[1]*(self.R+self.Roff) - input_variable[2]*(self.R+self.Roff),
+                    input_variable[2]*(self.R+self.Roff)
+                    ]  
+        return own_matrix
+    
+    def get_voltage_matrix(self, parameter):
+        if (parameter == "Q"):
+            voltage_matrix = [[1, 0, 0],
+                        [0, 1, 0],
+                        [0, 0, 1],
+                        ] 
+            return voltage_matrix
+
+    def get_current_matrix(self, parameter):
+        if (parameter == "Q"):
+            current_matrix = [[-1, 0, 0],
+                        [0, -1, 0],
+                        [0, 0, -1],
+                        ] 
+            return current_matrix
+
+    def get_position_switches(self, t):
+        delta_time_swicth = 1000 #dlya nachalnogo sravneniya
+        index_switcth = 0
+        for i in range(len(self.switch_time_Q)):
+            for j in self.switch_time_Q[i]:
+                if (((t - j) >= 0) and ((t - j) < delta_time_swicth)):           
+                    delta_time_swicth = (t - j)
+                    index_switcth = i
+        if (index_switcth == 0):
+            self.position_switch_Q = True
+            self.help_var_switch_Q == False
+            if (self.help_var_switch_Qon == True):
+                self.ton = t
+                self.help_var_switch_Qon = False
+            self.Roff = 0
+        elif (index_switcth == 1):
+            self.position_switch_Q = False
+            self.help_var_switch_Qon = True
+            if (self.help_var_switch_Q == False):
+                self.toff = t
+                self.help_var_switch_Q = True
+        print(self.position_switch_Q)
+
+    def time_interrupt(self):
+        list_time_interrupt = []
+        for i in range(len(self.switch_time_Q)):
+            for j in self.switch_time_Q[i]:
+                if (i == 0):
+                    list_time_interrupt.append(j)
+                if (i == 1):
+                    if (j == 0):
+                        list_time_interrupt.append(j)
+                    else:
+                        list_time_interrupt.append(j + 0.01)
+        return list_time_interrupt
+
+    def set_connection(self, bus_x, bus_y, bus_width, bus_height):
+        if ((self.x > bus_x) and (self.y + self.image_height > bus_y) and (self.x < bus_x + bus_width) and (self.y + self.image_height < bus_y + bus_height)):
+            if (self.position_switch_Q == False):
+                    return ("Q:OFF_SWITCH")
+            return ("Q:ON_SWITCH")
+        else:
+            return ("none")
+
+
+    def set_state_click(self, m_x, m_y):
+        self.k_click = 0.1
+        if ((m_x >= self.x + self.k_click*self.image_width) and (m_x <= self.x + self.image_width - self.k_click*self.image_width) and (m_y >= self.y + self.k_click*self.image_height) and (m_y <= self.y + self.image_height - self.k_click*self.image_height)):
+            if (self.state_click  == 0):
+                self.state_click = 1
+                self.delta_x = m_x - self.x
+                self.delta_y = m_y - self.y
+            else:
+                self.state_click = 0
+
+    def rotation(self, m_x, m_y):
+        pass
+        
+    def view_result(self, m_x, m_y):
+        pass
+
+    def change_parameter_in_model(self, m_x, m_y, WIDTH):
+        pass
+
+    def set_parameter_in_model(self):
+        pass
+
+
+    def move_model(self, m_x, m_y):
+        if (self.state_click  == 1):
+            self.canv.coords(self.image_model, m_x - self.delta_x, m_y - self.delta_y)
+            self.x = m_x - self.delta_x
+            self.y = m_y - self.delta_y
+
+class KZ_single_phase:
+    state_click = 0
+    state_change_parameter = 0
+    connectivity_to_bus = 1
+    switch_time_Q = [[7],[0]]
+    delta_x = 0
+    delta_y = 0
+    k_click = 0.1
+    position_switch_Q = True
+    help_var_switch_Q = False
+    help_var_switch_Qon = False
+    toff= 0
+    ton = 0
+    R = 0.0001
+    Roff = 0
+    Lc = 0.0002
+    def __init__(self, init_x, init_y, canv, root):
+        self.canv = canv
+        self.root = root
+        self.image_model_data = create_image_for_model("Image/KZ_single_phase.png")
+        self.image_width = self.image_model_data.width()
+        self.image_height = self.image_model_data.height()
+        self.x_menu = 0
+        self.y_menu = 0
+        self.x = init_x
+        self.y = init_y
+        self.image_model = self.canv.create_image(self.x,self.y,image = self.image_model_data, anchor = 'nw')
+    
+    def menu_click(self, m_x, m_y, width_object_menu):
+        if ((m_x > self.x_menu) and (m_x < self.x_menu + width_object_menu) and (m_y > self.y_menu) and (m_y < self.y_menu + width_object_menu)):
+            return True
+
+    def get_first(self):
+        return ([0])
+
+    def get_main_determinant(self, input_variable):
+        main_determinant = [[self.Lc]
+                            ]                             
+        return main_determinant
+
+    def get_own_matrix(self, input_variable, t):
+        if ((self.position_switch_Q == False) and ((t - self.toff) < 0.01)):
+            self.Lc= 50000/0.01*(t - self.toff)
+        if ((self.position_switch_Q == False) and ((t - self.toff) > 0.01)):
+            self.Lc = 0  
+        if ((self.position_switch_Q == True) and ((t - self.ton) < 0.01)):
+            self.Lc= -0.005/0.01*(t - self.ton) + 0.005
+        if ((self.position_switch_Q == True) and ((t - self.ton) > 0.01)):
+            self.Lc = 0
+        self.Roff = 0
+        own_matrix = [-input_variable[0]*(self.R+self.Roff)
+                    ]  
+        return own_matrix
+    
+    def get_voltage_matrix(self, parameter):
+        if (parameter == "Q"):
+            if (self.position_switch_Q == True):
+                voltage_matrix = [[-1, -1, -1]
+                            ] 
+            if (self.position_switch_Q == False):
+                voltage_matrix = [[-1]
+                            ] 
+            return voltage_matrix
+
+    def get_current_matrix(self, parameter):
+        if (parameter == "Q"):
+            if (self.position_switch_Q == True):
+                current_matrix = [[-1],
+                            [0],
+                            [0]
+                            ] 
+            if (self.position_switch_Q == False):
+                current_matrix = [[-1],
+                [0],
+                [0]
+                            ] 
+            return current_matrix
+
+    def get_position_switches(self, t):
+        delta_time_swicth = 1000 #dlya nachalnogo sravneniya
+        index_switcth = 0
+        for i in range(len(self.switch_time_Q)):
+            for j in self.switch_time_Q[i]:
+                if (((t - j) >= 0) and ((t - j) < delta_time_swicth)):           
+                    delta_time_swicth = (t - j)
+                    index_switcth = i
+        if (index_switcth == 0):
+            self.position_switch_Q = True
+            self.help_var_switch_Q == False
+            if (self.help_var_switch_Qon == True):
+                self.ton = t
+                self.help_var_switch_Qon = False
+            self.Roff = 0
+        elif (index_switcth == 1):
+            self.position_switch_Q = False
+            self.help_var_switch_Qon = True
+            if (self.help_var_switch_Q == False):
+                self.toff = t
+                self.help_var_switch_Q = True
+        #print(self.position_switch_Q)
+
+    def time_interrupt(self):
+        list_time_interrupt = []
+        for i in range(len(self.switch_time_Q)):
+            for j in self.switch_time_Q[i]:
+                if (i == 0):
+                    list_time_interrupt.append(j)
+                if (i == 1):
+                    if (j == 0):
+                        list_time_interrupt.append(j)
+                    else:
+                        list_time_interrupt.append(j + 0.01)
+        return list_time_interrupt
+
+    def set_connection(self, bus_x, bus_y, bus_width, bus_height):
+        if ((self.x + self.image_width/2 > bus_x) and (self.y > bus_y) and (self.x + self.image_width/2 < bus_x + bus_width) and (self.y < bus_y + bus_height)):
+            if (self.position_switch_Q == False):
+                    return ("Q:OFF_SWITCH")
+            return ("Q:ON_SWITCH")
+        else:
+            return ("none")
+
+
+    def set_state_click(self, m_x, m_y):
+        self.k_click = 0.1
+        if ((m_x >= self.x + self.k_click*self.image_width) and (m_x <= self.x + self.image_width - self.k_click*self.image_width) and (m_y >= self.y + self.k_click*self.image_height) and (m_y <= self.y + self.image_height - self.k_click*self.image_height)):
+            if (self.state_click  == 0):
+                self.state_click = 1
+                self.delta_x = m_x - self.x
+                self.delta_y = m_y - self.y
+            else:
+                self.state_click = 0
+
+    def rotation(self, m_x, m_y):
+        pass
+        
+    def view_result(self, m_x, m_y):
+        pass
+
+    def change_parameter_in_model(self, m_x, m_y, WIDTH):
+        pass
+
+    def set_parameter_in_model(self):
+        pass
+
 
     def move_model(self, m_x, m_y):
         if (self.state_click  == 1):
